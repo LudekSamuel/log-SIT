@@ -1,0 +1,213 @@
+Jun 30 00:01:51 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 00:01:51 piepie : connect from unknown[1.1.1.10]
+Jun 30 00:04:34 piepie : connect from unknown[1.1.1.10]
+Jun 30 00:04:41 piepie : NOQUEUE: reject: RCPT from unknown[1.1.1.10]: 450 4.7.25 Client host rejected: cannot find your hostname, [1.1.1.10]; from=<electricityavailablereductionn@gmail.com> to=<pk@pie.com> proto=ESMTP helo=<mta2.emailinfo.dunkindonuts.com>
+Jun 30 00:08:01 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 29 23:59:25
+Jun 30 00:08:01 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 29 23:59:25
+Jun 30 00:08:01 piepie : statistics: max cache size 1 at Jun 29 23:59:25
+Jun 30 00:09:30 piepie : connect from smtp.likeglow.co.uk[1.1.1.10]
+Jun 30 00:09:36 piepie : C35752010DD: client=smtp.likeglow.co.uk[1.1.1.10]
+Jun 30 00:09:36 piepie : improper command pipelining after RSET from smtp.likeglow.co.uk[1.1.1.10]: QUIT\r\n
+Jun 30 00:09:45 piepie : connect from unknown[1.1.1.10]
+Jun 30 00:09:52 piepie : NOQUEUE: reject: RCPT from unknown[1.1.1.10]: 450 4.7.25 Client host rejected: cannot find your hostname, [1.1.1.10]; from=<electricityavailablereductionn@gmail.com> to=<pk@pie.com> proto=ESMTP helo=<mta2.emailinfo.dunkindonuts.com>
+Jun 30 00:13:12 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 00:09:30
+Jun 30 00:13:12 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 00:09:30
+Jun 30 00:13:12 piepie : statistics: max cache size 2 at Jun 30 00:09:45
+Jun 30 00:15:01 piepie : connect from unknown[1.1.1.10]
+Jun 30 00:15:07 piepie : NOQUEUE: reject: RCPT from unknown[1.1.1.10]: 450 4.7.25 Client host rejected: cannot find your hostname, [1.1.1.10]; from=<electricityavailablereductionn@gmail.com> to=<pk@pie.com> proto=ESMTP helo=<mta2.emailinfo.dunkindonuts.com>
+Jun 30 00:18:28 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 00:15:01
+Jun 30 00:18:28 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 00:15:01
+Jun 30 00:18:28 piepie : statistics: max cache size 1 at Jun 30 00:15:01
+Jun 30 00:20:10 piepie : connect from unknown[1.1.1.10]
+Jun 30 00:20:16 piepie : NOQUEUE: reject: RCPT from unknown[1.1.1.10]: 450 4.7.25 Client host rejected: cannot find your hostname, [1.1.1.10]; from=<electricityavailablereductionn@gmail.com> to=<pk@pie.com> proto=ESMTP helo=<mta2.emailinfo.dunkindonuts.com>
+Jun 30 00:23:37 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 00:20:10
+Jun 30 00:23:37 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 00:20:10
+Jun 30 00:23:37 piepie : statistics: max cache size 1 at Jun 30 00:20:10
+Jun 30 00:25:22 piepie : connect from unknown[1.1.1.10]
+Jun 30 00:25:29 piepie : NOQUEUE: reject: RCPT from unknown[1.1.1.10]: 450 4.7.25 Client host rejected: cannot find your hostname, [1.1.1.10]; from=<electricityavailablereductionn@gmail.com> to=<pk@pie.com> proto=ESMTP helo=<mta2.emailinfo.dunkindonuts.com>
+Jun 30 00:28:49 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 00:25:22
+Jun 30 00:28:49 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 00:25:22
+Jun 30 00:28:49 piepie : statistics: max cache size 1 at Jun 30 00:25:22
+Jun 30 00:30:33 piepie : connect from unknown[1.1.1.10]
+Jun 30 00:30:39 piepie : NOQUEUE: reject: RCPT from unknown[1.1.1.10]: 450 4.7.25 Client host rejected: cannot find your hostname, [1.1.1.10]; from=<electricityavailablereductionn@gmail.com> to=<pk@pie.com> proto=ESMTP helo=<mta2.emailinfo.dunkindonuts.com>
+Jun 30 00:34:00 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 00:30:33
+Jun 30 00:34:00 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 00:30:33
+Jun 30 00:34:00 piepie : statistics: max cache size 1 at Jun 30 00:30:33
+Jun 30 00:35:41 piepie : connect from unknown[1.1.1.10]
+Jun 30 00:35:48 piepie : NOQUEUE: reject: RCPT from unknown[1.1.1.10]: 450 4.7.25 Client host rejected: cannot find your hostname, [1.1.1.10]; from=<electricityavailablereductionn@gmail.com> to=<pk@pie.com> proto=ESMTP helo=<mta2.emailinfo.dunkindonuts.com>
+Jun 30 00:39:08 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 00:35:41
+Jun 30 00:39:08 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 00:35:41
+Jun 30 00:39:08 piepie : statistics: max cache size 1 at Jun 30 00:35:41
+Jun 30 00:42:05 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 00:42:05 piepie : connect from unknown[1.1.1.10]
+Jun 30 00:45:26 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 00:42:05
+Jun 30 00:45:26 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 00:42:05
+Jun 30 00:45:26 piepie : statistics: max cache size 1 at Jun 30 00:42:05
+Jun 30 01:21:02 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 01:21:02 piepie : connect from unknown[1.1.1.10]
+Jun 30 01:24:22 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 01:21:02
+Jun 30 01:24:22 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 01:21:02
+Jun 30 01:24:22 piepie : statistics: max cache size 1 at Jun 30 01:21:02
+Jun 30 01:43:50 piepie : connect from unknown[1.1.1.10]
+Jun 30 01:47:10 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 01:43:50
+Jun 30 01:47:10 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 01:43:50
+Jun 30 01:47:10 piepie : statistics: max cache size 1 at Jun 30 01:43:50
+Jun 30 01:59:51 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 01:59:51 piepie : connect from unknown[1.1.1.10]
+Jun 30 02:03:11 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 01:59:51
+Jun 30 02:03:11 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 01:59:51
+Jun 30 02:03:11 piepie : statistics: max cache size 1 at Jun 30 01:59:51
+Jun 30 02:32:02 piepie : connect from portscanner-fra1-01.dev.cyberresilience.io[1.1.1.10]
+Jun 30 02:32:02 piepie : improper command pipelining after CONNECT from portscanner-fra1-01.dev.cyberresilience.io[1.1.1.10]: EHLO\r\n
+Jun 30 02:32:02 piepie : lost connection after EHLO from portscanner-fra1-01.dev.cyberresilience.io[1.1.1.10]
+Jun 30 02:35:22 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 02:32:02
+Jun 30 02:35:22 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 02:32:02
+Jun 30 02:35:22 piepie : statistics: max cache size 1 at Jun 30 02:32:02
+Jun 30 02:41:33 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 02:41:33 piepie : connect from unknown[1.1.1.10]
+Jun 30 02:44:53 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 02:41:33
+Jun 30 02:44:53 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 02:41:33
+Jun 30 02:44:53 piepie : statistics: max cache size 1 at Jun 30 02:41:33
+Jun 30 03:20:44 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 03:20:44 piepie : connect from unknown[1.1.1.10]
+Jun 30 03:24:04 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 03:20:44
+Jun 30 03:24:04 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 03:20:44
+Jun 30 03:24:04 piepie : statistics: max cache size 1 at Jun 30 03:20:44
+Jun 30 04:00:14 piepie : connect from unknown[1.1.1.10]
+Jun 30 04:00:35 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 04:00:35 piepie : connect from unknown[1.1.1.10]
+Jun 30 04:03:20 piepie : lost connection after CONNECT from unknown[1.1.1.10]
+Jun 30 04:05:41 piepie : connect from unknown[1.1.1.10]
+Jun 30 04:05:47 piepie : NOQUEUE: reject: RCPT from unknown[1.1.1.10]: 450 4.7.25 Client host rejected: cannot find your hostname, [1.1.1.10]; from=<teens@c.bellay.net> to=<vamjcaca@vrbanet.info> proto=ESMTP helo=<r.bellay.net>
+Jun 30 04:09:07 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 04:00:14
+Jun 30 04:09:07 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 04:00:14
+Jun 30 04:09:07 piepie : statistics: max cache size 2 at Jun 30 04:00:35
+Jun 30 04:42:48 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 04:42:48 piepie : connect from unknown[1.1.1.10]
+Jun 30 04:46:09 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 04:42:48
+Jun 30 04:46:09 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 04:42:48
+Jun 30 04:46:09 piepie : statistics: max cache size 1 at Jun 30 04:42:48
+Jun 30 04:58:02 piepie : connect from unknown[1.1.1.10]
+Jun 30 05:01:22 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 04:58:02
+Jun 30 05:01:22 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 04:58:02
+Jun 30 05:01:22 piepie : statistics: max cache size 1 at Jun 30 04:58:02
+Jun 30 05:26:00 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 05:26:00 piepie : connect from unknown[1.1.1.10]
+Jun 30 05:29:20 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 05:26:00
+Jun 30 05:29:20 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 05:26:00
+Jun 30 05:29:20 piepie : statistics: max cache size 1 at Jun 30 05:26:00
+Jun 30 06:09:45 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 06:09:45 piepie : connect from unknown[1.1.1.10]
+Jun 30 06:10:11 piepie : connect from starttls-virginia.securing-email.com[1.1.1.10]
+Jun 30 06:13:01 piepie /-script: stopping the  mail system
+Jun 30 06:13:01 piepie /master[965]: terminating on signal 15
+Jun 30 06:13:03 piepie /-script: starting the  mail system
+Jun 30 06:13:03 piepie /master: daemon started -- version 3.5.25, configuration /etc/
+Jun 30 06:13:03 piepie /-script: stopping the  mail system
+Jun 30 06:13:03 piepie /master: terminating on signal 15
+Jun 30 06:13:03 piepie /-script: starting the  mail system
+Jun 30 06:13:03 piepie /master: daemon started -- version 3.5.25, configuration /etc/
+Jun 30 06:46:57 piepie : connect from unknown[1.1.1.10]
+Jun 30 06:47:05 piepie : NOQUEUE: reject: RCPT from unknown[1.1.1.10]: 450 4.7.25 Client host rejected: cannot find your hostname, [1.1.1.10]; from=<pessina@info.com> to=<jarda@pie.com> proto=ESMTP helo=<ns.nexa.co.kr>
+Jun 30 06:51:17 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 06:51:17 piepie : connect from unknown[1.1.1.10]
+Jun 30 06:54:37 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 06:46:57
+Jun 30 06:54:37 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 06:46:57
+Jun 30 06:54:37 piepie : statistics: max cache size 1 at Jun 30 06:46:57
+Jun 30 07:30:06 piepie : connect from news.interkultur.com[1.1.1.10]
+Jun 30 07:30:12 piepie : 7F88A20117B: client=news.interkultur.com[1.1.1.10]
+Jun 30 07:30:12 piepie /cleanup: 7F88A20117B: message-id=<202430060530.1dcoxmvsc5u9jj@news.interkultur.com>
+Jun 30 07:30:12 piepie opendkim[634]: 7F88A20117B: s=mail d=interkultur.com a=rsa-sha256 SSL 
+Jun 30 07:30:12 piepie /qmgr: 7F88A20117B: from=<noreply@news.interkultur.com>, size=40957, nrcpt=1 (queue active)
+Jun 30 07:30:12 piepie spamc: connect to spamd on ::1 failed, retrying (#1 of 3): Connection refused
+Jun 30 07:30:12 piepie spamc: connect to spamd on 127.0.0.1 failed, retrying (#1 of 3): Connection refused
+Jun 30 07:30:13 piepie spamc: connect to spamd on ::1 failed, retrying (#2 of 3): Connection refused
+Jun 30 07:30:13 piepie spamc: connect to spamd on 127.0.0.1 failed, retrying (#2 of 3): Connection refused
+Jun 30 07:30:14 piepie spamc: connect to spamd on ::1 failed, retrying (#3 of 3): Connection refused
+Jun 30 07:30:14 piepie spamc: connect to spamd on 127.0.0.1 failed, retrying (#3 of 3): Connection refused
+Jun 30 07:30:14 piepie spamc: connection attempt to spamd aborted after 3 retries
+Jun 30 07:30:14 piepie /pickup: E05632012D0: uid=110 from=<noreply@news.interkultur.com>
+Jun 30 07:30:14 piepie /cleanup: E05632012D0: message-id=<202430060530.1dcoxmvsc5u9jj@news.interkultur.com>
+Jun 30 07:30:14 piepie /pipe: 7F88A20117B: to=<babiinka@gmail.com>, orig_to=<anna@vrbanettova.eu>, relay=spamas, delay=8.5, delays=6.4/0.01/0/2.1, dsn=2.0.0, status=sent (delivered via spamas service)
+Jun 30 07:30:14 piepie /qmgr: 7F88A20117B: removed
+Jun 30 07:30:14 piepie opendkim[634]: E05632012D0: s=mail d=interkultur.com a=rsa-sha256 SSL 
+Jun 30 07:30:14 piepie /qmgr: E05632012D0: from=<noreply@news.interkultur.com>, size=41270, nrcpt=1 (queue active)
+Jun 30 07:30:15 piepie /smtp: E05632012D0: to=<babiinka@gmail.com>, relay=gmail-smtp-in.l.google.com[1.1.1.10]:25, delay=0.99, delays=0.12/0.01/0.23/0.63, dsn=2.0.0, status=sent (250 2.0.0 OK  1719725415 a640c23a62f3a-a72ab04a3bcsi247280266b.311 - gsmtp)
+Jun 30 07:30:15 piepie /qmgr: E05632012D0: removed
+Jun 30 07:34:37 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 07:34:37 piepie : connect from unknown[1.1.1.10]
+Jun 30 07:37:57 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 07:30:06
+Jun 30 07:37:57 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 07:30:06
+Jun 30 07:37:57 piepie : statistics: max cache size 1 at Jun 30 07:30:06
+Jun 30 08:12:11 piepie : connect from unknown[1.1.1.10]
+Jun 30 08:15:31 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 08:12:11
+Jun 30 08:15:31 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 08:12:11
+Jun 30 08:15:31 piepie : statistics: max cache size 1 at Jun 30 08:12:11
+Jun 30 08:19:05 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 08:19:05 piepie : connect from unknown[1.1.1.10]
+Jun 30 08:21:11 piepie : connect from mail040.prg201.mkt-synd.com[1.1.1.10]
+Jun 30 08:21:17 piepie : 7D46020117B: client=mail040.prg201.mkt-synd.com[1.1.1.10]
+Jun 30 08:21:17 piepie /cleanup: 7D46020117B: message-id=<20240630082111.MKT18894380949@newsletter.drmax.cz>
+Jun 30 08:21:17 piepie opendkim[634]: 7D46020117B: message has signatures from newsletter.drmax.cz, mkt-synd.com
+Jun 30 08:21:17 piepie opendkim[634]: 7D46020117B: s=k1-7538 d=newsletter.drmax.cz a=rsa-sha256 SSL 
+Jun 30 08:21:17 piepie /qmgr: 7D46020117B: from=<c7538-m18894380949-e840539550@mkt.newsletter.drmax.cz>, size=172243, nrcpt=1 (queue active)
+Jun 30 08:21:17 piepie spamc: connect to spamd on ::1 failed, retrying (#1 of 3): Connection refused
+Jun 30 08:21:17 piepie spamc: connect to spamd on 127.0.0.1 failed, retrying (#1 of 3): Connection refused
+Jun 30 08:21:18 piepie spamc: connect to spamd on ::1 failed, retrying (#2 of 3): Connection refused
+Jun 30 08:21:18 piepie spamc: connect to spamd on 127.0.0.1 failed, retrying (#2 of 3): Connection refused
+Jun 30 08:21:19 piepie spamc: connect to spamd on ::1 failed, retrying (#3 of 3): Connection refused
+Jun 30 08:21:19 piepie spamc: connect to spamd on 127.0.0.1 failed, retrying (#3 of 3): Connection refused
+Jun 30 08:21:19 piepie spamc: connection attempt to spamd aborted after 3 retries
+Jun 30 08:21:19 piepie /pickup: D56972012D0: uid=110 from=<c7538-m18894380949-e840539550@mkt.newsletter.drmax.cz>
+Jun 30 08:21:19 piepie /cleanup: D56972012D0: message-id=<20240630082111.MKT18894380949@newsletter.drmax.cz>
+Jun 30 08:21:19 piepie /pipe: 7D46020117B: to=<babiinka@gmail.com>, orig_to=<anna@vrbanettova.eu>, relay=spamas, delay=8.5, delays=6.5/0.01/0/2, dsn=2.0.0, status=sent (delivered via spamas service)
+Jun 30 08:21:19 piepie /qmgr: 7D46020117B: removed
+Jun 30 08:21:19 piepie opendkim[634]: D56972012D0: message has signatures from newsletter.drmax.cz, mkt-synd.com
+Jun 30 08:21:19 piepie opendkim[634]: D56972012D0: s=k1-7538 d=newsletter.drmax.cz a=rsa-sha256 SSL 
+Jun 30 08:21:19 piepie /qmgr: D56972012D0: from=<c7538-m18894380949-e840539550@mkt.newsletter.drmax.cz>, size=172706, nrcpt=1 (queue active)
+Jun 30 08:21:20 piepie /smtp: D56972012D0: to=<babiinka@gmail.com>, relay=gmail-smtp-in.l.google.com[1.1.1.10]:25, delay=0.95, delays=0.08/0.01/0.17/0.69, dsn=2.0.0, status=sent (250 2.0.0 OK  1719728480 a640c23a62f3a-a72b3517401si193800666b.246 - gsmtp)
+Jun 30 08:21:20 piepie /qmgr: D56972012D0: removed
+Jun 30 08:25:08 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 08:19:05
+Jun 30 08:25:08 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 08:19:05
+Jun 30 08:25:08 piepie : statistics: max cache size 1 at Jun 30 08:19:05
+Jun 30 08:35:58 piepie : connect from azpdegc38.stretchoid.com[1.1.1.10]
+Jun 30 08:35:58 piepie : improper command pipelining after CONNECT from azpdegc38.stretchoid.com[1.1.1.10]: MGLNDD_181.126.129.139_25\n
+Jun 30 08:35:58 piepie : lost connection after UNKNOWN from azpdegc38.stretchoid.com[1.1.1.10]
+Jun 30 08:39:18 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 08:35:58
+Jun 30 08:39:18 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 08:35:58
+Jun 30 08:39:18 piepie : statistics: max cache size 1 at Jun 30 08:35:58
+Jun 30 09:04:04 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 09:04:04 piepie : connect from unknown[1.1.1.10]
+Jun 30 09:07:25 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 09:04:04
+Jun 30 09:07:25 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 09:04:04
+Jun 30 09:07:25 piepie : statistics: max cache size 1 at Jun 30 09:04:04
+Jun 30 09:47:25 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 09:47:25 piepie : connect from unknown[1.1.1.10]
+Jun 30 09:50:45 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 09:47:25
+Jun 30 09:50:45 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 09:47:25
+Jun 30 09:50:45 piepie : statistics: max cache size 1 at Jun 30 09:47:25
+Jun 30 10:29:37 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 10:29:37 piepie : connect from unknown[1.1.1.10]
+Jun 30 10:32:57 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 10:29:37
+Jun 30 10:32:57 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 10:29:37
+Jun 30 10:32:57 piepie : statistics: max cache size 1 at Jun 30 10:29:37
+Jun 30 10:38:32 piepie : connect from unknown[1.1.1.10]
+Jun 30 10:38:40 piepie : NOQUEUE: reject: RCPT from unknown[1.1.1.10]: 450 4.7.25 Client host rejected: cannot find your hostname, [1.1.1.10]; from=<pessina@info.com> to=<kp@pie.com> proto=ESMTP helo=<ns.nexa.co.kr>
+Jun 30 10:42:03 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 10:38:32
+Jun 30 10:42:03 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 10:38:32
+Jun 30 10:42:03 piepie : statistics: max cache size 1 at Jun 30 10:38:32
+Jun 30 11:10:37 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 11:10:37 piepie : connect from unknown[1.1.1.10]
+Jun 30 11:13:57 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 11:10:37
+Jun 30 11:13:57 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 11:10:37
+Jun 30 11:13:57 piepie : statistics: max cache size 1 at Jun 30 11:10:37
+Jun 30 11:26:45 piepie : connect from fun.monitoring.internet-measurement.com[1.1.1.10]
+Jun 30 11:26:52 piepie : connect from unknown[1.1.1.10]
+Jun 30 11:30:12 piepie : statistics: max connection rate 1/60s for (smtp:1.1.1.2) at Jun 30 11:26:45
+Jun 30 11:30:12 piepie : statistics: max connection count 1 for (smtp:1.1.1.2) at Jun 30 11:26:45
+Jun 30 11:30:12 piepie : statistics: max cache size 2 at Jun 30 11:26:52
+Jun 30 11:49:25 piepie : warning: hostname static.150.35.154.94.client.virtualine.xyz does not resolve to address 94.154.35.150: Name or service not known
+Jun 30 11:49:25 piepie : connect from unknown[1.1.1.10]
+Oct 30 17:11:41 piepie : NOQUEUE: reject: RCPT from unknown[1.1.1.10]: 450 4.7.25 Client host rejected: cannot find your hostname, [1.1.1.10]; from=<ookah@stat.4u.pl> to=<milos@old-club.cz> proto=ESMTP helo=<[1.1.1.10]>
+Jan 25 21:10:22 piepie : connect from bestoftoday.click[1.1.1.10]
+Jan 25 21:10:28 piepie : NOQUEUE: reject: RCPT from bestoftoday.click[1.1.1.10]: 554 5.7.1 Service unavailable; Helo command [formantiwxaop.click] blocked using dbl.spamhaus.org; Listed by DBL, see https://check.spamhaus.org/query/domain/formantiwxaop.click; from=<mqhsz@bestoftoday.click> to=<j@pie.com> proto=ESMTP helo=<formantiwxaop.click>

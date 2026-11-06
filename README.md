@@ -1,0 +1,210 @@
+# hosts_log_scan
+
+Skript stáhne seznam blokovaných adres **Unified hosts + fakenews** od StevenBlack,
+uloží ho do cache a prohledá s ním logy. Na konci vypíše, **které adresy ze seznamu
+StevenBlack** se v lozích objevily a v kterých souborech.
+
+Poslední úprava: 2026-11-04 (verze 10)
+
+---
+
+## Rychlý start
+
+```
+python hosts_log_scan.py "C:\cesta\k\logum"
+```
+
+Cesta k logům je jediný povinný parametr (v zadání označený ADR). Složka se prochází
+včetně podsložek, soubory `.gz` se čtou přímo.
+
+Výstup (příklad):
+
+```
+#TOP 10 nalezených adres ze seznamu StevenBlack (počet výskytů)
+  1.        3x  4u.pl;
+  2.        2x  google.com;
+#TOP 10 log souborů (počet zásahů / unikátních domén)
+  1.        5x     2 unik.  dns.log;
+```
+
+### Jak se hledá a co se vypisuje
+
+1. **Filtrování** probíhá podle **přesných záznamů** ze seznamu StevenBlack. Když je v logu
+   `www.google.com`, ale v seznamu je jen `analytics.google.com`, počítá se jen ten
+   druhý. Běžný provoz se nepočítá.
+2. **Výpis** je ve výchozím stavu zkrácen na konec adresy (second-level + TLD):
+   `stat.4u.pl` a `adstat.4u.pl` se sečtou jako `4u.pl`. Zkrátí se až nalezené záznamy,
+   ne celý log.
+
+Chceš-li ve výpisu vidět celé adresy ze seznamu (`stat.4u.pl`, `analytics.google.com`),
+spusť skript s přepínačem `--no-sld-tld`:
+
+```
+python hosts_log_scan.py "C:\cesta\k\logum" --no-sld-tld
+```
+```
+#TOP 10 nalezených adres ze seznamu StevenBlack (počet výskytů)
+  1.        2x  stat.4u.pl;
+  2.        2x  analytics.google.com;
+  3.        1x  adstat.4u.pl;
+```
+
+## Přepínače
+
+| Přepínač | Co dělá |
+|---|---|
+| `adr` | adresář s logy (povinný, pokud nepoužiješ `--repo`) |
+| `--top N` | počet řádků ve statistice (výchozí 10) |
+| `--sld-tld` / `--no-sld-tld` | zkrácený výpis (`stat.4u.pl` -> `4u.pl`). **Výchozí je zapnuto**, vypnutí `--no-sld-tld` |
+| `--subdomains` | `x.ads.example.com` v logu se spáruje se záznamem `ads.example.com` ze seznamu |
+| `--refresh` | ignorovat ETag a stáhnout seznam znovu |
+| `--offline` | nekontaktovat server, použít cache |
+| `--cache-dir` | kde je cache (výchozí složka `.cache/hosts_log_scan` vedle skriptu) |
+| `--workers N` | počet procesů pro velké logy (výchozí podle jader, nejvýš 8) |
+| `--repo URL` | logy stáhnout z git repozitáře a udržovat je aktuální |
+| `--subdir`, `--logs-dir`, `--sync-days`, `--sync-now` | doplňky k `--repo` |
+| `--report-dir` | kam ukládat reporty (výchozí `reports/`) |
+
+---
+
+## Co je ETag a jak ho skript používá
+
+**ETag** (entity tag) je „otisk verze“ souboru, který posílá webový server spolu s
+odpovědí. Server ho vytvoří sám. Má tvar řetězce v uvozovkách, třeba
+`"1f01476bbbc8…"`. Když se soubor změní, ETag se změní. Když zůstane stejný, ETag
+zůstane také.
+
+Proč je užitečný: bez něj by skript musel při každém spuštění stáhnout celý hosts
+soubor (asi 2,4 MB), aby zjistil, jestli je nový. S ETagem se jen zeptá:
+
+1. Poprvé: skript stáhne soubor a server pošle ETag. Skript si ho uloží do
+   `hosts_unified_fakenews.meta.json`.
+2. Příště: skript pošle serveru dotaz „mám verzi s tímto ETagem, změnilo se něco?“
+   (hlavička `If-None-Match`).
+3. Server odpoví jedním ze dvou způsobů:
+   - **304 Not Modified**: beze změny. Neposílá se žádný obsah, odpověď má pár stovek
+     bajtů. Skript použije cache.
+   - **200 OK** s novým souborem a novým ETagem: seznam se změnil, skript ho uloží.
+
+Skript se o význam ETagu nestará, jen ho porovná. Důležité je, že ETag řeší otázku
+„změnilo se to na serveru?“ rychle a bez stahování.
+
+### Proč je tu i SHA-256
+
+ETag říká jen, jak je to na serveru. Nic neříká o tom, **co máš uložené u sebe**.
+Proto skript ukládá i otisk **SHA-256** vypočítaný z obsahu souboru v cache:
+
+- při každém spuštění se otisk souboru v cache porovná s uloženým. Když nesedí (někdo
+  soubor upravil, poškodil se disk, přerušilo se stahování), cache se zahodí a
+  stáhne se znovu,
+- po stažení se porovná otisk nového obsahu s uloženým. Když je stejný, cache se
+  nepřepisuje.
+
+Shrnutí: **ETag = je to na serveru jiné?**, **SHA-256 = je to u mě v pořádku a je to jiné?**
+
+Při chybě sítě skript použije existující platnou cache a napíše varování.
+
+---
+
+## Historie změn
+
+### Verze 10: rychlost při jednom logu
+- **Proč:** při jednom log souboru byla verze 9 pomalejší než dřívější verze 4. Paralelní
+  zpracování a přepis hledání pomáhají hlavně u více velkých souborů. U jednoho souboru
+  se projevila jejich režie.
+- **Co se změnilo:**
+  - **Hledání slov:** nový regulární výraz byl pomalejší (0,56 s proti 0,36 s na 22 MB).
+    Vrátil jsem jednoduchý výraz a okrajové znaky (`.`, `-`, `_`) se ořezávají až u
+    unikátních slov, ne u každého výskytu.
+  - **Načtení hosts souboru:** funkce pro rozpoznání IP adresy (`ipaddress`) se volala
+    pro každý řádek, i když to byla doména. Teď se volá jen u slov, která IP adresa být
+    může. Načtení seznamu se zkrátilo z asi 620 ms na asi 80 ms při každém spuštění
+    (množiny domén a IP jsou shodné, ověřeno).
+- **Výsledek:** na jednom 22 MB logu je hledání zhruba stejně rychlé jako ve starší
+  verzi (0,77 s proti 0,81 s) a se `--subdomains` rychlejší (0,78 s proti 1,31 s). Výsledky
+  hledání jsou shodné.
+- **Co v celkovém čase zůstává navíc oproti verzi 4:** při každém spuštění se skript
+  zeptá serveru, jestli se seznam nezměnil (ETag, viz výše). Je to jeden malý dotaz
+  na síť, takže přidá desítky až stovky milisekund podle připojení. Chceš-li ho
+  přeskočit, spusť skript s `--offline`.
+
+### Verze 9: zkrácený výpis je výchozí
+- **Proč:** přepínač `--sld-tld` bylo nutné psát při každém spuštění.
+- **Co se změnilo:** v kódu je `--sld-tld` definovaný přes `argparse.BooleanOptionalAction`
+  s výchozí hodnotou `True`. Tím vznikla dvojice `--sld-tld` (zapnout) a `--no-sld-tld`
+  (vypnout). Bez přepínače se výpis zkracuje na konec adresy.
+- Starý zápis `--sld-tld` dál funguje, jen už není potřeba.
+- Chceš-li výchozí chování změnit zpět, v kódu stačí v řádku s `--sld-tld` přepsat
+  `default=True` na `default=False`.
+- Příklady a tabulka přepínačů v README jsou aktualizované.
+
+### Verze 8: `--sld-tld` jen zkracuje výpis, nezahlcuje ho běžným provozem
+- **Proč:** ve verzi 7 se s `--sld-tld` zkracovala i každá adresa z logu. `www.google.com`
+  nebo `mail.google.com` se pak počítaly jako zásah (`google.com`) a ve výpisu bylo
+  tisíce zásahů z běžného provozu. Adresy ze seznamu StevenBlack nebyly vidět.
+- **Co se změnilo:** hledání je vždy **přesné** (nebo se subdoménami s `--subdomains`)
+  a závisí jen na záznamech ze seznamu. `--sld-tld` zkrátí až **nalezené** záznamy:
+  `stat.4u.pl` a `adstat.4u.pl` se sečtou jako `4u.pl`.
+- Širší hledání podle second-level domén (verze 7) bylo odstraněno. Počty zásahů jsou
+  s `--sld-tld` i bez něj stejné (ověřeno na 181 MB logů), liší se jen seskupení ve výpisu.
+- Skript je tím o něco jednodušší: odpadla interní proměnná pro režim hledání.
+
+### Verze 7: výpis adres přímo ze seznamu StevenBlack
+- **Proč:** v předchozí verzi se hledalo podle second-level + TLD, takže se vypisovaly
+  zkrácené domény (např. `google.com`) a jedna doména se objevovala mnohokrát
+  najednou. Potřeba byla vidět konkrétní adresy ze seznamu.
+- **Co se změnilo:** výchozí režim hledá a vypisuje **přesné záznamy z hosts souboru**.
+  Zkracování na second-level + TLD zůstalo jako volitelný přepínač `--sld-tld`.
+  Přepínač `--full-domains` zanikl (je to nově výchozí chování).
+- Nadpis statistiky je „nalezených adres ze seznamu StevenBlack“. Report uvádí i
+  použitý režim hledání.
+
+### Verze 6: cache kontrolovaná hashem
+- **Proč:** kontrola podle stáří souboru (24 h, později 168 h) neřekla, jestli se
+  seznam doopravdy změnil.
+- **Co se změnilo:** vedle cache se ukládá `hosts_unified_fakenews.meta.json` s
+  SHA-256 a ETagem. Skript se při každém spuštění zeptá serveru s ETagem (viz výše).
+- Odstraněno: `--ttl` a časový limit cache.
+- Přidáno: `--offline`, `--refresh` nově ignoruje ETag.
+
+### Verze 5: rychlejší hledání
+- Soubory se čtou po velkých blocích (8 MB), slova se rozsekají jedním voláním
+  regulárního výrazu a spočítají `Counter`em. Python porovnává jen **unikátní** slova,
+  ne každý výskyt zvlášť.
+- Velké logy (od 20 MB, víc než jeden soubor) se zpracují paralelně (`--workers`).
+- Na 181 MB testovacích logů se čas se `--subdomains` zkrátil z 13,4 s na 6,2 s.
+  U přesného hledání je zrychlení malé (7,3 s na 6,7 s). Paralelní běh se mi nepodařilo
+  změřit (testovací prostředí mělo jedno jádro).
+- Výsledky jsou shodné s předchozí verzí (ověřeno).
+
+### Verze 4: tvoje úpravy
+- Cache složka u skriptu (`.cache/hosts_log_scan`), platnost cache 168 h.
+- Upravený formát reportu (`#TOP …`, řádky končí středníkem).
+
+### Verze 3: měření času
+- Report i konec výpisu ukazují dobu hledání a dobu celého běhu.
+
+### Verze 2: logy z gitu
+- Přepínač `--repo` stáhne logy z git repozitáře (shallow clone) a obnovuje je
+  nejvýš jednou za 7 dní. Report se ukládá do `reports/`. Složka `.git` se při
+  prohledávání přeskakuje.
+
+### Verze 1: základ podle zadání
+- Stažení hosts souboru Unified + fakenews, cache, parametr s adresářem logů, TOP 10
+  nalezených adres a TOP 10 log souborů.
+- IP adresy: sinkhole adresy (`0.0.0.0`, `127.0.0.1`) se nehledají, protože by
+  byly v každém logu. Hledají se jen skutečné IP, které se v seznamu objeví.
+
+---
+
+## Omezení
+
+- Hledání je textové: skript nepozná, jestli byla adresa skutečně zablokována, jen že
+  se v logu vyskytla.
+- Zkrácení výpisu zná jen běžné dvoupísmenné koncovky typu `co.uk`, `com.au`. Není to
+  celý Public Suffix List.
+- Seznam fake news webů nespravuje StevenBlack, ale autor rozšíření (Marktron).
+  Co do něj patří, je věcí jeho úsudku.
+
+
+- READ_CHUNK označuje velikost chunku, možné změnit podle zařízení.
