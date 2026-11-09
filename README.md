@@ -1,17 +1,17 @@
 # log-scan
 
-Skript stáhne seznam blokovaných adres **Unified hosts + fakenews** od StevenBlack,
+Skript `log-scan.py` stáhne seznam blokovaných adres **Unified hosts + fakenews** od StevenBlack,
 uloží ho do cache a prohledá s ním logy. Na konci vypíše, **které adresy ze seznamu
 StevenBlack** se v lozích objevily a v kterých souborech.
 
-Poslední úprava: 2026-11-09 (verze 12)
+Poslední úprava: 2026-11-09 (verze 13)
 
 ---
 
 ## Rychlý start
 
 ```
-python hosts_log_scan.py "C:\cesta\k\logum"
+python log-scan.py "C:\cesta\k\logum"
 ```
 
 Cesta k logům je jediný povinný parametr (v zadání označený ADR). Složka se prochází
@@ -40,7 +40,7 @@ Chceš-li ve výpisu vidět celé adresy ze seznamu (`stat.4u.pl`, `analytics.go
 spusť skript s přepínačem `--no-sld-tld`:
 
 ```
-python hosts_log_scan.py "C:\cesta\k\logum" --no-sld-tld
+python log-scan.py "C:\cesta\k\logum" --no-sld-tld
 ```
 ```
 #TOP 10 nalezených adres ze seznamu StevenBlack (počet výskytů)
@@ -146,7 +146,6 @@ Při chybě sítě skript použije existující platnou cache a napíše varová
 ---
 
 ## Historie změn
-
 ### Verze 12: rychlejší hledání v jednom procesu
 - **Proč:** paralelismus zkrátil čas u víc souborů, ale pořád zbývala většina práce,
   kterou udělá každý proces. Změřil jsem, kde se v jednom procesu tráví čas na 22 MB logu:
