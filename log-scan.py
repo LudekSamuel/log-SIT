@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-log_scan.py
+log-scan.py
 
 1) Stáhne hosts soubor "Unified hosts + fakenews" (StevenBlack/hosts) do cache.
    Cache se kontroluje podle HASHE (SHA-256 + ETag), ne podle stáří:
@@ -33,7 +33,6 @@ import hashlib
 import ipaddress
 import json
 import os
-import re
 import shutil
 import subprocess
 import sys
@@ -66,12 +65,19 @@ IGNORED_HOSTNAMES = {
     "ip6-allnodes", "ip6-allrouters", "ip6-allhosts", "0.0.0.0",
 }
 
-# Jednoduchý (a rychlý) výraz pro slova. Text se před hledáním převede na malá
-# písmena; okrajové znaky (koncová tečka v example.com.) se ořežou až u unikátních
-# slov, ne u každého výskytu zvlášť.
-TOKEN_RE = re.compile(r"[a-z0-9_.\-]+")
+# Rozdělení textu na slova bez regulárního výrazu a bez dekódování: každý bajt, který
+# nepatří do domény, se jedním průchodem (bytes.translate, v C) změní na mezeru,
+# velká písmena na malá, a text se rozdělí podle mezer (bytes.split, také v C).
+# Doménová jména jsou ASCII, takže dekódování z UTF-8 není potřeba.
+# Okrajové znaky (koncová tečka v example.com.) se ořežou až u unikátních slov,
+# ne u každého výskytu zvlášť.
+_ALLOWED = b"abcdefghijklmnopqrstuvwxyz0123456789_.-"
+_TABLE = bytes(
+    c if c in _ALLOWED else (c + 32 if 65 <= c <= 90 else 32)
+    for c in range(256)
+)
 
-READ_CHUNK = 8 * 1024 * 1024        # kolik bajtů se čte najednou (hlídá paměť uvnitř úkolu)
+READ_CHUNK = 4 * 1024 * 1024        # kolik bajtů se čte najednou (hlídá paměť uvnitř úkolu)
 POOL_MIN_BYTES = 20 * 1024 * 1024   # paralelně se jede až od této velikosti logů
 PART_MB_DEFAULT = 32                # velikost úseku souboru (jeden úkol pro jeden proces)
 MIN_PART_BYTES = 4 * 1024 * 1024    # menší úseky už by se nevyplatily (režie)
@@ -315,14 +321,16 @@ def open_log(path: Path):
 
 # Seznamy z hosts souboru. Nastavují se jednou (v hlavním procesu i v každém
 # pomocném procesu), aby se nemusely posílat s každým souborem znovu.
-_MATCH: set = set()     # záznamy ze seznamu StevenBlack
+_MATCH: set = set()     # záznamy ze seznamu StevenBlack (jako bajty)
 _IPS: set = set()
 
 
 def _init_worker(match_domains, ips):
     global _MATCH, _IPS
-    _MATCH = match_domains
-    _IPS = ips
+    # Zdroj dat je text, hledá se v bajtech. Záznamy s jinými než ASCII znaky
+    # by se stejně nikdy nenašly (v logu se píšou jako punycode).
+    _MATCH = {d.encode("ascii") for d in match_domains if d.isascii()}
+    _IPS = {i.encode("ascii") for i in ips if i.isascii()}
 
 
 def group_by_end(hits: Counter) -> Counter:
@@ -367,9 +375,10 @@ def scan_part(task, root_str: str, subdomains: bool):
     Prohledá jeden úkol = úsek souboru (cesta, začátek, konec).
     Vrací (relativní cesta, Counter nálezů, chyba).
 
-    Rychlost: text se čte po velkých blocích, rozseká na slova jedním voláním
-    regulárního výrazu a spočítá se Counterem (vše v C). Python pak porovnává
-    jen UNIKÁTNÍ slova, ne každý výskyt zvlášť.
+    Rychlost: blok se čte jako bajty, jedním průchodem se převede na malá písmena a
+    změní se v mezerami oddělená slova (bytes.translate), rozdělí se (bytes.split)
+    a spočítá Counterem (vše v C, bez dekódování a bez regulárního výrazu).
+    Python pak porovnává jen UNIKÁTNÍ slova, ne každý výskyt zvlášť.
     """
     path_str, start, end = task
     path = Path(path_str)
@@ -377,28 +386,27 @@ def scan_part(task, root_str: str, subdomains: bool):
     hits: Counter = Counter()
     try:
         for block in iter_blocks(path, start, end):
-            text = block.decode("utf-8", errors="replace").lower()
             words = Counter()
-            for raw, count in Counter(TOKEN_RE.findall(text)).items():
-                word = raw.strip(".-_")
+            for raw, count in Counter(block.translate(_TABLE).split()).items():
+                word = raw.strip(b".-_")
                 if word:
                     words[word] += count
 
             for ip in _IPS.intersection(words):          # IP adresy: vždy přesná shoda
-                hits[ip] += words[ip]
+                hits[ip.decode("ascii")] += words[ip]
 
             for dom in _MATCH.intersection(words):       # přesné shody se záznamy seznamu
-                hits[dom] += words[dom]
+                hits[dom.decode("ascii")] += words[dom]
 
             if subdomains:                                # shody přes nadřazený záznam
                 for word, count in words.items():
-                    if word in _MATCH or "." not in word:
+                    if word in _MATCH or b"." not in word:
                         continue
-                    labels = word.split(".")
+                    labels = word.split(b".")
                     for i in range(1, len(labels) - 1):
-                        parent = ".".join(labels[i:])
+                        parent = b".".join(labels[i:])
                         if parent in _MATCH:
-                            hits[parent] += count
+                            hits[parent.decode("ascii")] += count
                             break
         return rel, hits, None
     except (OSError, EOFError, gzip.BadGzipFile) as exc:
@@ -502,7 +510,6 @@ def format_duration(seconds: float) -> str:
 def build_report(domain_hits, file_hits, file_unique, files_scanned, top_n, source,
                  scan_seconds: float, mode_label: str) -> str:
     out = []
-    out.append("=" * 70)
     out.append(f"Report ze dne {datetime.now():%Y-%m-%d %H:%M}")
     out.append(f"Zdroj logů: {source}")
     out.append(f"Doba hledání: {format_duration(scan_seconds)}")

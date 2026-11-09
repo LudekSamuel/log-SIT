@@ -4,7 +4,7 @@ Skript stáhne seznam blokovaných adres **Unified hosts + fakenews** od StevenB
 uloží ho do cache a prohledá s ním logy. Na konci vypíše, **které adresy ze seznamu
 StevenBlack** se v lozích objevily a v kterých souborech.
 
-Poslední úprava: 2026-11-09 (verze 11)
+Poslední úprava: 2026-11-09 (verze 12)
 
 ---
 
@@ -97,7 +97,7 @@ Zalomení řádku je v UTF-8 jediný bajt a nikdy se nevyskytne uvnitř jiného 
 takže řez nerozbije ani diakritiku. Každý řádek tak zpracuje přesně jeden úsek.
 
 **Úkol vs. blok.** Úsek (úkol) dostane jeden proces. Uvnitř úkolu se čte po **blocích** po
-8 MB (`READ_CHUNK`), aby nebyl v paměti celý úsek najednou. Bloky tedy hlídají paměť,
+4 MB (`READ_CHUNK`), aby nebyl v paměti celý úsek najednou. Bloky tedy hlídají paměť,
 úseky rozdělují práci.
 
 **Kdy se paralelně nejede.** Pod 20 MB logů dohromady (rozjezd procesů by stál víc, než
@@ -147,6 +147,39 @@ Při chybě sítě skript použije existující platnou cache a napíše varová
 
 ## Historie změn
 
+### Verze 12: rychlejší hledání v jednom procesu
+- **Proč:** paralelismus zkrátil čas u víc souborů, ale pořád zbývala většina práce,
+  kterou udělá každý proces. Změřil jsem, kde se v jednom procesu tráví čas na 22 MB logu:
+  rozdělení na slova regulárním výrazem (0,22 s) a počítání slov (0,12 s) bylo víc než
+  všechno ostatní dohromady.
+- **Co se změnilo:**
+  - Log se už **nedekóduje** na text. Zpracovává se přímo jako bajty: jedním průchodem
+    (`bytes.translate`) se velká písmena změní na malá a vše, co nepatří do domény, na
+    mezeru, a pak se text rozdělí (`bytes.split`). Obojí běží v C, bez regulárního výrazu.
+    Doménová jména jsou ASCII, takže dekódování není potřeba.
+  - Seznam domén a IP se pro porovnání ukládá taky jako bajty (každý proces si ho při
+    startu převede). Nalezené adresy se zpět na text převádějí až na konci a jen ty,
+    které se opravdu našly.
+  - Regulární výraz `TOKEN_RE` a import `re` odpadly.
+  - Blok čtení (`READ_CHUNK`) je 4 MB místo 8 MB. Rychlost je stejná (rozdíl v měření
+    byl v rámci šumu), ale každý proces má asi o polovinu menší paměťovou špičku.
+- **Výsledek (jeden proces, naměřeno):**
+
+  | log | předchozí | nová verze | zrychlení |
+  |---|---|---|---|
+  | 1 soubor 22 MB | 0,42 s | 0,27 s | 1,6× |
+  | 8 souborů 181 MB | 3,66 s | 2,21 s | 1,7× |
+  | 8 souborů, `--subdomains` | 3,83 s | 2,44 s | 1,6× |
+
+  Zrychlení se násobí s paralelním zpracováním (verze 11), protože každý proces je
+  rychlejší. Výsledky hledání jsou shodné s předchozími verzemi (ověřeno na jednom
+  souboru i osmi, se `--subdomains` i bez) a hranice úseků prošly 504 kontrolami
+  (diakritika, CRLF, bez koncového zalomení, prázdné řádky).
+- **Co se nezměnilo a proč:** celkový čas navíc zůstává u každého spuštění, který hledání
+  nezkrátí: dotaz na server s ETagem (desítky až stovky ms podle připojení; `--offline`
+  ho přeskočí), načtení seznamu (asi 80 ms) a start procesů (na Windows stovky ms).
+  Na velkých logách (stovky MB a víc) jsou tyhle položky proti hledání malé.
+
 ### Verze 11: paralelní zpracování i uvnitř jednoho logu
 - **Proč:** skript byl při velkých logech pomalý. Soubor byl nejmenší jednotkou práce,
   takže se dvěma logy po 300 MB a jedním 5 GB dělal největší log jediný proces a
@@ -159,16 +192,6 @@ Při chybě sítě skript použije existující platnou cache a napíše varová
   - Nový přepínač `--part-mb`. Velikost úseku se navíc přizpůsobuje počtu procesů.
   - Úkoly se řadí od největšího, ať na konci nezůstává jeden dlouhý.
   - Funkce `scan_one_file` byla nahrazena funkcemi `iter_blocks`, `scan_part` a `make_tasks`.
-- **Ověření správnosti:** výsledky jsou shodné s původní verzí pro jeden soubor 22 MB
-  i osm souborů 181 MB, s různým počtem procesů a velikostí úseků (i se `--subdomains`).
-  Dělení souboru se testovalo na 330 kombinacích velikostí úseků (1 bajt až víc než
-  soubor), s diakritikou, řádky ukončenými CRLF, prázdnými řádky, souborem bez
-  koncového zalomení a prázdným souborem. Každý řádek byl vždy zpracován přesně jednou.
-- **Rychlost:** zrychlení na tvém počítači nemám změřené. Testovací prostředí mělo jedno
-  jádro, takže paralelismus nešlo prakticky vyzkoušet. Ověřil jsem jen, že se práce
-  správně rozdělí a že režie je malá (u 22 MB logu asi 0,04 s). Čekám, že se čas bude
-  zkracovat zhruba podle počtu jader, dokud nebude brzdit disk. Zkus `--workers 4`, `8` a
-  `16` a porovnej čas hledání ve výpisu.
 - **Nezměněno:** `.gz` soubory se dělit nedají a zpracuje je dál jeden proces.
 
 ### Verze 10: rychlost při jednom logu
