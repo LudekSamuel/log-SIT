@@ -1,4 +1,4 @@
-# hosts_log_scan
+# log-scan
 
 Skript stáhne seznam blokovaných adres **Unified hosts + fakenews** od StevenBlack,
 uloží ho do cache a prohledá s ním logy. Na konci vypíše, **které adresy ze seznamu
