@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-hosts_log_scan.py
+log_scan.py
 
 1) Stáhne hosts soubor "Unified hosts + fakenews" (StevenBlack/hosts) do cache.
    Cache se kontroluje podle HASHE (SHA-256 + ETag), ne podle stáří:
@@ -11,7 +11,6 @@ hosts_log_scan.py
 2) Volitelně stáhne logy z git repozitáře do vlastní složky a udržuje je
    aktuální (výchozí obnova jednou za 7 dní).
 3) Prohledá logy a vypíše TOP N adres ze seznamu StevenBlack, které se v lozích
-
    vyskytují, a TOP N log souborů. Vypisují se přesně záznamy z hosts souboru.
    Ve výpisu se standardně zobrazí jen konec adresy (stat.4u.pl -> 4u.pl); hledá se
    přitom podle přesných záznamů ze seznamu. Vypnutí: --no-sld-tld.
@@ -72,8 +71,10 @@ IGNORED_HOSTNAMES = {
 # slov, ne u každého výskytu zvlášť.
 TOKEN_RE = re.compile(r"[a-z0-9_.\-]+")
 
-READ_CHUNK = 8 * 1024 * 1024        # kolik znaků se čte najednou
+READ_CHUNK = 8 * 1024 * 1024        # kolik bajtů se čte najednou (hlídá paměť uvnitř úkolu)
 POOL_MIN_BYTES = 20 * 1024 * 1024   # paralelně se jede až od této velikosti logů
+PART_MB_DEFAULT = 32                # velikost úseku souboru (jeden úkol pro jeden proces)
+MIN_PART_BYTES = 4 * 1024 * 1024    # menší úseky už by se nevyplatily (režie)
 
 # Druhé úrovně veřejných přípon pod dvoupísmennými národními doménami
 # (example.co.uk, example.com.au ...). Jednoduchá náhrada Public Suffix List.
@@ -89,6 +90,7 @@ SECOND_LEVEL_LABELS = {
 def registrable(host: str):
     """
     ads.tracker.example.com -> example.com
+    www.bbc.co.uk           -> bbc.co.uk
     Vrací None pro IP adresy a slova bez tečky.
     """
     labels = host.split(".")
@@ -332,53 +334,99 @@ def group_by_end(hits: Counter) -> Counter:
     return grouped
 
 
-def scan_one_file(path_str: str, root_str: str, subdomains: bool):
+def iter_blocks(path: Path, start: int, end: int):
     """
-    Prohledá jeden soubor. Vrací (relativní cesta, Counter nálezů, chyba).
+    Vrací bloky (bytes) s CELÝMI řádky, které ZAČÍNAJÍ v bajtovém úseku [start, end).
+
+    Pravidla, aby se žádný řádek neztratil ani nepočítal dvakrát:
+    - úsek, který nezačíná na začátku souboru, zahodí první (rozříznutý) řádek,
+      patří úseku před ním;
+    - řádek, který přesahuje hranici `end`, se dočte do konce, patří tomuto úseku.
+    Zalomení řádku je v UTF-8 jediný bajt, který se nikdy nevyskytne uvnitř
+    jiného znaku, takže řez nerozbije diakritiku.
+    Soubory .gz se nedají dělit (číst se musí od začátku), jsou vždy jeden úsek.
+    """
+    opener = gzip.open if path.suffix == ".gz" else open
+    with opener(path, "rb") as fh:
+        if start > 0:
+            fh.seek(start - 1)
+            fh.readline()                 # dočte rozříznutý řádek (patří předchozímu úseku)
+        pos = fh.tell()
+        while pos < end:
+            block = fh.read(min(READ_CHUNK, end - pos))
+            if not block:
+                break
+            if not block.endswith(b"\n"):
+                block += fh.readline()    # dočti rozečtený řádek, ať se slovo nerozseká
+            pos = fh.tell()
+            yield block
+
+
+def scan_part(task, root_str: str, subdomains: bool):
+    """
+    Prohledá jeden úkol = úsek souboru (cesta, začátek, konec).
+    Vrací (relativní cesta, Counter nálezů, chyba).
 
     Rychlost: text se čte po velkých blocích, rozseká na slova jedním voláním
     regulárního výrazu a spočítá se Counterem (vše v C). Python pak porovnává
     jen UNIKÁTNÍ slova, ne každý výskyt zvlášť.
     """
+    path_str, start, end = task
     path = Path(path_str)
     rel = str(path.relative_to(root_str))
     hits: Counter = Counter()
     try:
-        with open_log(path) as fh:
-            while True:
-                chunk = fh.read(READ_CHUNK)
-                if not chunk:
-                    break
-                chunk += fh.readline()          # dočti rozečtený řádek, ať se slovo nerozseká
-                words = Counter()
-                for raw, count in Counter(TOKEN_RE.findall(chunk.lower())).items():
-                    word = raw.strip(".-_")
-                    if word:
-                        words[word] += count
+        for block in iter_blocks(path, start, end):
+            text = block.decode("utf-8", errors="replace").lower()
+            words = Counter()
+            for raw, count in Counter(TOKEN_RE.findall(text)).items():
+                word = raw.strip(".-_")
+                if word:
+                    words[word] += count
 
-                for ip in _IPS.intersection(words):          # IP adresy: vždy přesná shoda
-                    hits[ip] += words[ip]
+            for ip in _IPS.intersection(words):          # IP adresy: vždy přesná shoda
+                hits[ip] += words[ip]
 
-                for dom in _MATCH.intersection(words):       # přesné shody se záznamy seznamu
-                    hits[dom] += words[dom]
+            for dom in _MATCH.intersection(words):       # přesné shody se záznamy seznamu
+                hits[dom] += words[dom]
 
-                if subdomains:                                # shody přes nadřazený záznam
-                    for word, count in words.items():
-                        if word in _MATCH or "." not in word:
-                            continue
-                        labels = word.split(".")
-                        for i in range(1, len(labels) - 1):
-                            parent = ".".join(labels[i:])
-                            if parent in _MATCH:
-                                hits[parent] += count
-                                break
+            if subdomains:                                # shody přes nadřazený záznam
+                for word, count in words.items():
+                    if word in _MATCH or "." not in word:
+                        continue
+                    labels = word.split(".")
+                    for i in range(1, len(labels) - 1):
+                        parent = ".".join(labels[i:])
+                        if parent in _MATCH:
+                            hits[parent] += count
+                            break
         return rel, hits, None
     except (OSError, EOFError, gzip.BadGzipFile) as exc:
         return rel, hits, f"{path}: {exc}"
 
 
+def make_tasks(files, part_bytes: int):
+    """
+    Rozdělí soubory na úkoly (cesta, začátek, konec). Velký soubor se rozdělí na
+    stejně velké úseky, malý a každý .gz zůstanou celé. Největší úkoly jdou první,
+    aby na konci nezůstával jeden dlouhý úkol sám.
+    """
+    weighted = []
+    for f in files:
+        size = f.stat().st_size
+        if f.suffix == ".gz":
+            weighted.append((size * 5, (str(f), 0, sys.maxsize)))   # po rozbalení bývá větší
+            continue
+        parts = max(1, round(size / part_bytes))
+        for i in range(parts):
+            start, end = size * i // parts, size * (i + 1) // parts
+            weighted.append((end - start, (str(f), start, end)))
+    weighted.sort(key=lambda item: -item[0])
+    return [task for _, task in weighted]
+
+
 def scan_logs(root: Path, match_domains, ips, subdomains: bool, workers: int = 1,
-              group_sld: bool = False):
+              group_sld: bool = False, part_mb: float = PART_MB_DEFAULT):
     domain_hits = Counter()
     file_hits = Counter()
     file_unique = {}
@@ -387,26 +435,44 @@ def scan_logs(root: Path, match_domains, ips, subdomains: bool, workers: int = 1
     total_bytes = sum(f.stat().st_size for f in files)
     _init_worker(match_domains, ips)
 
-    worker = partial(scan_one_file, root_str=str(root), subdomains=subdomains)
-    paths = [str(f) for f in files]
+    use_pool = workers > 1 and total_bytes >= POOL_MIN_BYTES
+    if use_pool:
+        # Úseky nesmí být tak velké, aby se pracovníkům nedostalo práce; ani tak
+        # malé, aby se víc času ztratilo režií.
+        part_bytes = int(part_mb * 1024 * 1024)
+        part_bytes = min(part_bytes, max(MIN_PART_BYTES, total_bytes // (workers * 4)))
+    else:
+        part_bytes = sys.maxsize          # bez paralelismu zůstává každý soubor celý
+    tasks = make_tasks(files, part_bytes)
 
+    worker = partial(scan_part, root_str=str(root), subdomains=subdomains)
     results = None
-    if workers > 1 and len(files) > 1 and total_bytes >= POOL_MIN_BYTES:
-        n = min(workers, len(files))
+    if use_pool and len(tasks) > 1:
+        n = min(workers, len(tasks))
         try:
-            print(f"[scan] Paralelní zpracování ({n} procesů)")
+            print(f"[scan] Paralelně: {n} procesů, {len(tasks)} úkolů "
+                  f"(úseky souborů po ~{part_bytes / 1024 / 1024:.0f} MB)")
             with ProcessPoolExecutor(max_workers=n, initializer=_init_worker,
                                      initargs=(match_domains, ips)) as pool:
-                results = list(pool.map(worker, paths, chunksize=1))
+                # chunksize=1: volný proces si hned bere další úkol z fronty
+                results = list(pool.map(worker, tasks, chunksize=1))
         except Exception as exc:  # noqa: BLE001
             print(f"[varování] Paralelně to nešlo ({exc}), jedu po jednom.", file=sys.stderr)
             results = None
     if results is None:
-        results = [worker(p) for p in paths]
+        results = [worker(t) for t in tasks]
 
+    per_file: dict = {}
+    errors = set()
     for rel, hits, error in results:
         if error:
-            print(f"[varování] Nelze přečíst {error}", file=sys.stderr)
+            errors.add(error)
+        per_file.setdefault(rel, Counter()).update(hits)   # sečtení výsledků částí souboru
+    for error in sorted(errors):
+        print(f"[varování] Nelze přečíst {error}", file=sys.stderr)
+
+    for rel in sorted(per_file):
+        hits = per_file[rel]
         if hits:
             if group_sld:
                 hits = group_by_end(hits)   # seskupení až PO filtrování podle seznamu
@@ -415,6 +481,7 @@ def scan_logs(root: Path, match_domains, ips, subdomains: bool, workers: int = 1
             file_unique[rel] = set(hits)
 
     return domain_hits, file_hits, file_unique, len(files)
+
 
 # --------------------------------------------------------------------------
 # Výstup
@@ -435,6 +502,7 @@ def format_duration(seconds: float) -> str:
 def build_report(domain_hits, file_hits, file_unique, files_scanned, top_n, source,
                  scan_seconds: float, mode_label: str) -> str:
     out = []
+    out.append("=" * 70)
     out.append(f"Report ze dne {datetime.now():%Y-%m-%d %H:%M}")
     out.append(f"Zdroj logů: {source}")
     out.append(f"Doba hledání: {format_duration(scan_seconds)}")
@@ -453,6 +521,7 @@ def build_report(domain_hits, file_hits, file_unique, files_scanned, top_n, sour
     for i, (fname, count) in enumerate(file_hits.most_common(top_n), 1):
         out.append(f"{i:>3}. {count:>8}x  {len(file_unique[fname]):>4} unik.  {fname};")
     return "\n".join(out)
+
 
 def main():
     run_start = time.perf_counter()
@@ -497,6 +566,9 @@ def main():
                     help="nekontrolovat server, použít hosts soubor z cache")
     ap.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE_DIR,
                     help=f"adresář cache hosts souboru (výchozí {DEFAULT_CACHE_DIR})")
+    ap.add_argument("--part-mb", type=float, default=PART_MB_DEFAULT,
+                    help="největší velikost úseku souboru v MB; velké logy se dělí na úseky, "
+                         f"které se zpracují paralelně (výchozí {PART_MB_DEFAULT})")
     ap.add_argument("--workers", type=int, default=min(os.cpu_count() or 1, 8),
                     help="počet procesů pro velké logy (výchozí podle počtu jader, max. 8)")
     args = ap.parse_args()
@@ -530,7 +602,8 @@ def main():
     # 3) scan + report
     print(f"[scan] Prohledávám {root} ...")
     scan_start = time.perf_counter()
-    result = scan_logs(root, match_domains, ips, args.subdomains, args.workers, args.sld_tld)
+    result = scan_logs(root, match_domains, ips, args.subdomains, args.workers, args.sld_tld,
+                       args.part_mb)
     scan_seconds = time.perf_counter() - scan_start
 
     report = build_report(*result, top_n=args.top, source=source,
@@ -543,6 +616,7 @@ def main():
     print(f"\n[report] Uloženo do {report_file}")
     print(f"[čas] Hledání: {format_duration(scan_seconds)}, "
           f"celý běh včetně stažení: {format_duration(time.perf_counter() - run_start)}")
+
 
 if __name__ == "__main__":
     main()
