@@ -4,7 +4,7 @@ Skript stáhne seznam blokovaných adres **Unified hosts + fakenews** od StevenB
 uloží ho do cache a prohledá s ním logy. Na konci vypíše, **které adresy ze seznamu
 StevenBlack** se v lozích objevily a v kterých souborech.
 
-Poslední úprava: 2026-11-04 (verze 10)
+Poslední úprava: 2026-11-09 (verze 11)
 
 ---
 
@@ -60,10 +60,49 @@ python hosts_log_scan.py "C:\cesta\k\logum" --no-sld-tld
 | `--refresh` | ignorovat ETag a stáhnout seznam znovu |
 | `--offline` | nekontaktovat server, použít cache |
 | `--cache-dir` | kde je cache (výchozí složka `.cache/hosts_log_scan` vedle skriptu) |
-| `--workers N` | počet procesů pro velké logy (výchozí podle jader, nejvýš 8) |
+| `--workers N` | počet procesů pro velké logy (výchozí podle jader, nejvýš 8; strop platí jen pro výchozí hodnotu) |
+| `--part-mb N` | největší velikost úseku souboru v MB (výchozí 32); velké logy se dělí na úseky, které se zpracují paralelně |
 | `--repo URL` | logy stáhnout z git repozitáře a udržovat je aktuální |
 | `--subdir`, `--logs-dir`, `--sync-days`, `--sync-now` | doplňky k `--repo` |
 | `--report-dir` | kam ukládat reporty (výchozí `reports/`) |
+
+---
+
+## Jak funguje paralelní zpracování
+
+Cílem je, aby žádný proces nečekal, dokud je kde pracovat. I **jeden velký log** se proto
+rozdělí na úseky a procesy si je rozeberou.
+
+1. **Úkol = úsek souboru.** Log se rozdělí podle **bajtových pozic** na stejně velké
+   úseky (výchozí 32 MB, přepínač `--part-mb`). Soubor 5 GB tak dá asi 160 úkolů,
+   malý soubor zůstane jedním úkolem.
+2. **Dynamické přidělování.** Úkoly leží ve společné frontě. Proces, který dokončí úkol,
+   si hned vezme další. Když dva logy po 300 MB skončí dřív, jejich procesy se pustí
+   do zbytku obřího logu a nečekají.
+3. **Největší úkoly první.** Aby na konci nezbyl jeden dlouhý úkol sám.
+4. **Sečtení výsledků.** Každý úsek vrátí počty nalezených adres. Počty částí jednoho
+   souboru se na konci sečtou, takže výsledek je stejný jako při zpracování celého souboru.
+5. **Velikost úseku se přizpůsobuje.** Je nejvýš `--part-mb`, ale menší, když je logů
+   málo, aby se práce rozdělila na dost úkolů (zhruba 4 na proces). Nejmenší úsek je
+   4 MB, protože menší by se kvůli režii nevyplatily.
+
+**Jak se řeže, aby se nic neztratilo ani nezdvojilo.** Hranice úseku může padnout
+doprostřed řádku, ba i doprostřed slova:
+
+- úsek, který nezačíná na začátku souboru, **zahodí první (rozříznutý) řádek**, protože
+  patří úseku před ním,
+- řádek, který **přesahuje** hranici, dočte do konce. Patří úseku, ve kterém začíná.
+
+Zalomení řádku je v UTF-8 jediný bajt a nikdy se nevyskytne uvnitř jiného znaku,
+takže řez nerozbije ani diakritiku. Každý řádek tak zpracuje přesně jeden úsek.
+
+**Úkol vs. blok.** Úsek (úkol) dostane jeden proces. Uvnitř úkolu se čte po **blocích** po
+8 MB (`READ_CHUNK`), aby nebyl v paměti celý úsek najednou. Bloky tedy hlídají paměť,
+úseky rozdělují práci.
+
+**Kdy se paralelně nejede.** Pod 20 MB logů dohromady (rozjezd procesů by stál víc, než
+ušetří), při `--workers 1` a u souborů `.gz`. Komprimovaný soubor se musí číst od
+začátku a nedá se do něj skočit doprostřed, takže jeden `.gz` zpracuje vždy jeden proces.
 
 ---
 
@@ -107,6 +146,30 @@ Při chybě sítě skript použije existující platnou cache a napíše varová
 ---
 
 ## Historie změn
+
+### Verze 11: paralelní zpracování i uvnitř jednoho logu
+- **Proč:** skript byl při velkých logech pomalý. Soubor byl nejmenší jednotkou práce,
+  takže se dvěma logy po 300 MB a jedním 5 GB dělal největší log jediný proces a
+  ostatní po krátké práci čekaly.
+- **Co se změnilo:**
+  - Velké logy se dělí na úseky podle bajtových pozic (výchozí 32 MB) a procesy si je
+    berou z fronty. Kdo skončí, vezme další úsek, takže nikdo nečeká.
+  - Soubor se čte binárně a hranice úseků se určují podle zalomení řádku. Žádný řádek
+    se neztratí ani nespočítá dvakrát (podrobně viz „Jak funguje paralelní zpracování“).
+  - Nový přepínač `--part-mb`. Velikost úseku se navíc přizpůsobuje počtu procesů.
+  - Úkoly se řadí od největšího, ať na konci nezůstává jeden dlouhý.
+  - Funkce `scan_one_file` byla nahrazena funkcemi `iter_blocks`, `scan_part` a `make_tasks`.
+- **Ověření správnosti:** výsledky jsou shodné s původní verzí pro jeden soubor 22 MB
+  i osm souborů 181 MB, s různým počtem procesů a velikostí úseků (i se `--subdomains`).
+  Dělení souboru se testovalo na 330 kombinacích velikostí úseků (1 bajt až víc než
+  soubor), s diakritikou, řádky ukončenými CRLF, prázdnými řádky, souborem bez
+  koncového zalomení a prázdným souborem. Každý řádek byl vždy zpracován přesně jednou.
+- **Rychlost:** zrychlení na tvém počítači nemám změřené. Testovací prostředí mělo jedno
+  jádro, takže paralelismus nešlo prakticky vyzkoušet. Ověřil jsem jen, že se práce
+  správně rozdělí a že režie je malá (u 22 MB logu asi 0,04 s). Čekám, že se čas bude
+  zkracovat zhruba podle počtu jader, dokud nebude brzdit disk. Zkus `--workers 4`, `8` a
+  `16` a porovnej čas hledání ve výpisu.
+- **Nezměněno:** `.gz` soubory se dělit nedají a zpracuje je dál jeden proces.
 
 ### Verze 10: rychlost při jednom logu
 - **Proč:** při jednom log souboru byla verze 9 pomalejší než dřívější verze 4. Paralelní
@@ -199,12 +262,12 @@ Při chybě sítě skript použije existující platnou cache a napíše varová
 
 ## Omezení
 
+- Soubory `.gz` se nedají rozdělit na úseky, takže obří `.gz` zpracuje jeden proces.
+- Zrychlení paralelním zpracováním závisí na počtu jader a rychlosti disku. Na pomalém
+  disku se procesy o čtení dělí a další procesy už nepomohou.
 - Hledání je textové: skript nepozná, jestli byla adresa skutečně zablokována, jen že
   se v logu vyskytla.
 - Zkrácení výpisu zná jen běžné dvoupísmenné koncovky typu `co.uk`, `com.au`. Není to
   celý Public Suffix List.
 - Seznam fake news webů nespravuje StevenBlack, ale autor rozšíření (Marktron).
   Co do něj patří, je věcí jeho úsudku.
-
-
-- READ_CHUNK označuje velikost chunku, možné změnit podle zařízení.
